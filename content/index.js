@@ -1,5 +1,5 @@
 chrome.runtime.sendMessage({ type: 'user-cookie', payload: document.cookie }, function (response) {
-  console.log(response);
+  // console.log(response);
 });
 
 chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
