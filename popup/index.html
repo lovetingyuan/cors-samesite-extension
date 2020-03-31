@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CORS and SameSite</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pretty-checkbox@3.0/dist/pretty-checkbox.min.css">
+</head>
+<body>
+  <style>
+    #app {
+      width: 260px;
+      height: 160px;
+      padding: 5px;
+      font-size: 16px;
+      user-select: none;
+    }
+    #content {
+      margin-top: 26px;
+    }
+    h3 {
+      text-align: center;
+    }
+    ul li {
+      margin: 14px 0;
+    }
+  </style>
+  <div id="app">
+    <h3>🔛 CORS & 🍪 SameSite</h3>
+    <ul id="content">
+      <li>
+        <div class="pretty p-switch p-fill p-toggle">
+          <input type="checkbox" id="cors" data-title="Access-Control-Allow-Origin: *" />
+          <div class="state p-on">
+            <label>&nbsp;CORS enabled</label>
+          </div>
+          <div class="state p-off">
+            <label>&nbsp;CORS by default</label>
+          </div>
+        </div>
+      </li>
+      <li>
+        <div class="pretty p-switch p-fill p-toggle">
+          <input type="checkbox" id="samesite" data-title="SameSite=None" />
+          <div class="state p-on">
+            <label>&nbsp;SameSite disabled</label>
+          </div>
+          <div class="state p-off">
+            <label>&nbsp;SameSite by default</label>
+          </div>
+        </div>
+      </li>
+    </ul>
+  </div>
+  <script src="main.js"></script>
+</body>
+</html>
