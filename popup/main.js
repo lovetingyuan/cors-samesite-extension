@@ -29,3 +29,20 @@ chrome.tabs.query({ active: true, currentWindow: true }, tabs => {
     }
   })
 })
+function sendToContentScript (type, payload) {
+  const { promise, resolve } = new function() { this.promise = new Promise(resolve => this.resolve = resolve) }
+  chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
+    chrome.tabs.sendMessage(tabs[0].id, { type, payload }, function(response) {
+      resolve(response)
+    })
+  })
+  return promise
+}
+
+document.getElementById('reload-btn').addEventListener('click', () => {
+  sendToContentScript('reload').then(res => {
+    if (res && res.result === 'ok') {
+      window.close()
+    }
+  })
+})

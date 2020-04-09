@@ -54,8 +54,10 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
     if (request.type === 'user-cookie') {
       cookiesMap[sender.tab.id] = request.payload || ''
       sendResponse({ result: 'ok', type: request.type })
+      return
     }
   }
+  sendResponse({ result: 'not ok' })
 })
 
 setupHeaderModListener()
@@ -79,7 +81,14 @@ function modifyResHeader (details) {
     const credential = details.responseHeaders.find(item => {
       return item.name.toLowerCase() === 'access-control-allow-credentials'
     })
-    const needCredential = credential && credential.value === 'true'
+    if (!credential) {
+      details.responseHeaders.push({
+        name: 'Access-Control-Allow-Credentials', value: 'true'
+      })
+    } else {
+      credential.value = 'true'
+    }
+    const needCredential = true // credential && credential.value === 'true'
     if (!hasCors) {
       details.responseHeaders.push({
         name: 'Access-Control-Allow-Origin',
