@@ -72,36 +72,53 @@ function sendToContentScript (type, payload) {
   return promise
 }
 
+function addHeader (headers, name, value) {
+  const head = headers.find(item => {
+    return item.name.toLowerCase() === name.toLowerCase()
+  })
+  if (!head) {
+    if (typeof value === 'function') {
+      value = value()
+      if (value === undefined) {
+        return
+      }
+    }
+    headers.push({
+      name, value: value + ''
+    })
+  } else {
+    head.value = (typeof value === 'function' ? value(head.value) : value) + ''
+  }
+}
+
 function modifyResHeader (details) {
+  console.log('details', details)
   if (!enabledSameSiteTabsMap[details.tabId] && !enabledCORSTabsMap[details.tabId]) return
   if (enabledCORSTabsMap[details.tabId]) {
-    const hasCors = details.responseHeaders.find(item => {
-      return item.name.toLowerCase() === 'Access-Control-Allow-Origin'.toLowerCase()
-    })
-    const credential = details.responseHeaders.find(item => {
-      return item.name.toLowerCase() === 'access-control-allow-credentials'
-    })
-    if (!credential) {
-      details.responseHeaders.push({
-        name: 'Access-Control-Allow-Credentials', value: 'true'
-      })
-    } else {
-      credential.value = 'true'
-    }
-    const needCredential = true // credential && credential.value === 'true'
-    if (!hasCors) {
-      details.responseHeaders.push({
-        name: 'Access-Control-Allow-Origin',
-        value: needCredential ? details.initiator : '*'
-      })
-    } else {
-      hasCors.value = needCredential ? details.initiator : '*'
-    }
-  }
-  if (enabledSameSiteTabsMap[details.tabId]) {
-    details.responseHeaders.forEach(item => {
-      if (item.name.toLowerCase() === 'set-cookie') {
-        let setcookie = item.value
+    // if (details.method === 'OPTIONS' && details.statusCode !== 200) {
+    //   details.statusCode = 200
+    //   details.statusLine = 'HTTP/1.1 200'
+    //   addHeader(details.responseHeaders, 'status', 200)
+    // }
+    Object.entries({
+      'Access-Control-Allow-Origin': details.initiator,
+      'Access-Control-Allow-Credentials': true,
+      'Access-Control-Allow-Methods': [
+        'GET', 'POST', 'HEAD', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'
+      ],
+      'Access-Control-Allow-Headers': originvalue => {
+        let list = []
+        if (originvalue) {
+          list = originvalue.split(',').map(v => v.trim())
+        }
+        list = list.concat([
+          'authorization'
+        ])
+        return [...new Set(list)]
+      },
+      'Set-Cookie': cookie => {
+        if (!cookie || !cookie.trim()) return
+        let setcookie = cookie
         if (setcookie.includes('SameSite=')) {
           setcookie.replace(/SameSite=(Lax|Strict)/, 'SameSite=None')
         } else {
@@ -110,8 +127,10 @@ function modifyResHeader (details) {
         if (!setcookie.includes('Secure')) {
           setcookie = setcookie + '; Secure'
         }
-        item.value = setcookie
+        return setcookie
       }
+    }).forEach(([name, value]) => {
+      addHeader(details.responseHeaders, name, value)
     })
   }
   // sendToContentScript('log', 'modify response header')
