@@ -27,6 +27,9 @@ window.issamesiteenabled = function (tab) {
 }
 
 function modifyReqHeader (details) {
+  if (!/^https?:\/\/localhost:\d+/.test(details.initiator)) {
+    return
+  }
   if (enabledSameSiteTabsMap[details.tabId] && cookiesMap[details.tabId]) {
     const setCookieIndex = details.requestHeaders.findIndex(header => {
       return header.name.toLowerCase() === 'cookie'
@@ -39,6 +42,7 @@ function modifyReqHeader (details) {
       }).join('; ')
       if (userCookies.length) {
         header.value = userCookies + '; ' + header.value
+        console.log('modifyreqheader')
         return {
           requestHeaders: details.requestHeaders.slice()
         }
@@ -92,7 +96,9 @@ function addHeader (headers, name, value) {
 }
 
 function modifyResHeader (details) {
-  console.log('details', details)
+  if (!/^https?:\/\/localhost:\d+/.test(details.initiator)) {
+    return
+  }
   if (!enabledSameSiteTabsMap[details.tabId] && !enabledCORSTabsMap[details.tabId]) return
   if (enabledCORSTabsMap[details.tabId]) {
     // if (details.method === 'OPTIONS' && details.statusCode !== 200) {
@@ -134,9 +140,15 @@ function modifyResHeader (details) {
     })
   }
   // sendToContentScript('log', 'modify response header')
+  console.log('modifyresheader')
+
   return {
     responseHeaders: details.responseHeaders.slice()
   }
+}
+
+function onTabUpdate (tabId, changeInfo, tab) {
+  // console.log(tabId, changeInfo, tab)
 }
 
 function setupHeaderModListener() {
@@ -153,6 +165,9 @@ function setupHeaderModListener() {
     { urls: ['<all_urls>'] },
     ['requestHeaders', 'blocking', 'extraHeaders']
   );
+
+  chrome.tabs.onUpdated.removeListener(onTabUpdate);
+  chrome.tabs.onUpdated.addListener(onTabUpdate);
   
   // chrome.webRequest.onBeforeRequest.removeListener(modifyRequest);
   // chrome.webRequest.onBeforeRequest.addListener(
